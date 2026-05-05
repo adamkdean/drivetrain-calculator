@@ -28,11 +28,4 @@ Derived outputs: circumference, time per revolution, RPS, and `v` in multiple un
 
 ## Usage
 
-Open the hosted URL or `index.html` directly. Set motor RPM, edit teeth counts per stage, set wheel diameter, lock two of `{D, ω, v}`. The remaining variable updates on input.
-
-## Local
-
-```sh
-git clone git@github.com:adamkdean/drivetrain-calculator.git
-open drivetrain-calculator/index.html
-```
+Set motor RPM, edit teeth counts per stage, set wheel diameter, lock two of `{D, ω, v}`. The remaining variable updates on input.
