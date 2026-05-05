@@ -2,7 +2,9 @@
 
 Drivetrain calculator for robotics. Computes gearbox reduction and wheel/tread linear speed from a configurable multi-stage gear train.
 
-Hosted: https://adamkdean.github.io/drivetrain-calculator/
+View the [demo](https://adamkdean.github.io/drivetrain-calculator/).
+
+![Drivetrain Calculator](https://github.com/user-attachments/assets/ab2ebfdb-9b09-4ba4-ae06-a3aecd1b4f4c)
 
 ## Gearbox
 
@@ -26,8 +28,3 @@ Wheel ω can be linked to the gearbox output, in which case it tracks the gearbo
 
 Derived outputs: circumference, time per revolution, RPS, and `v` in multiple units.
 
-## Usage
-
-Set motor RPM, edit teeth counts per stage, set wheel diameter, lock two of `{D, ω, v}`. The remaining variable updates on input.
-
-![Drivetrain Calculator usage](https://github.com/user-attachments/assets/ab2ebfdb-9b09-4ba4-ae06-a3aecd1b4f4c)
