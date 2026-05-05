@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drivetrain Calculator</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root {
+    --bg: #eef2f6;
+    --grid-minor: rgba(71, 85, 105, 0.08);
+    --grid-major: rgba(71, 85, 105, 0.16);
+    --paper: #ffffff;
+    --ink: #0f172a;
+    --ink-2: #334155;
+    --ink-3: #64748b;
+    --rule: #94a3b8;
+    --rule-2: #cbd5e1;
+    --accent: #1e3a8a;
+    --accent-2: #1d4ed8;
+    --locked: #b45309;
+    --locked-bg: #fff7ed;
+    --solve: #15803d;
+    --solve-bg: #f0fdf4;
+    --danger: #b91c1c;
+    --warning-bg: #fef3c7;
+    --mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background-color: var(--bg);
+    background-image:
+      linear-gradient(var(--grid-minor) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px),
+      linear-gradient(var(--grid-major) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-major) 1px, transparent 1px);
+    background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+    background-position: -1px -1px, -1px -1px, -1px -1px, -1px -1px;
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+  .wrap { max-width: 1160px; margin: 0 auto; }
+
+  /* Drawing-title-block style header */
+  header.titleblock {
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    margin-bottom: 18px;
+    padding: 12px 16px;
+  }
+  .tb-title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .tb-title i { color: var(--accent); }
+
+  /* Section panel — looks like a drafting card */
+  section.panel {
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    margin-bottom: 18px;
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #1e293b;
+    color: #f8fafc;
+    border-bottom: 1.5px solid var(--ink);
+  }
+  .panel-head i { font-size: 16px; }
+  .panel-head h2 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .panel-head .head-meta {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #cbd5e1;
+    letter-spacing: 0.08em;
+  }
+  .panel-body { padding: 16px; }
+
+  /* Formula stripe */
+  .formula {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-2);
+    background: #f8fafc;
+    border: 1px solid var(--rule-2);
+    padding: 8px 12px;
+    margin-bottom: 14px;
+    letter-spacing: 0.02em;
+  }
+
+  /* GEARBOX SECTION ============================ */
+  .motor-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1px solid var(--rule);
+    margin-bottom: 16px;
+  }
+  .motor-row .icon-pill {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .motor-row .field-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-3);
+    display: block;
+    margin-bottom: 2px;
+  }
+  .motor-row input {
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--ink);
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    width: 140px;
+    padding: 2px 0;
+    outline: none;
+  }
+  .motor-row input:focus { border-color: var(--accent-2); }
+  .motor-row .unit {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-3);
+    margin-left: 4px;
+  }
+
+  .gear-train-wrap {
+    overflow-x: auto;
+    border: 1px dashed var(--rule);
+    background:
+      repeating-linear-gradient(45deg, transparent 0, transparent 8px, rgba(100,116,139,0.04) 8px, rgba(100,116,139,0.04) 9px);
+    padding: 16px;
+  }
+  .gear-train {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    min-width: min-content;
+  }
+  .gear-card {
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    min-width: 132px;
+    width: 132px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .gear-card .gc-head {
+    background: #f1f5f9;
+    border-bottom: 1px solid var(--ink);
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .gear-card .gc-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-3);
+    letter-spacing: 0.1em;
+  }
+  .gear-card .gc-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink);
+    font-weight: 600;
+    margin-left: 4px;
+  }
+  .gear-card .gc-del {
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: var(--ink-3);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 4px;
+  }
+  .gear-card .gc-del:hover { color: var(--danger); }
+  .gear-card .gc-body {
+    padding: 12px 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .type-toggle {
+    display: flex;
+    border: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .type-toggle button {
+    flex: 1;
+    background: var(--paper);
+    border: none;
+    padding: 4px 6px;
+    cursor: pointer;
+    color: var(--ink-3);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .type-toggle button.on {
+    background: var(--ink);
+    color: #fff;
+  }
+  .gear-field {
+    display: flex;
+    flex-direction: column;
+  }
+  .gear-field label {
+    font-family: var(--mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-3);
+    margin-bottom: 2px;
+  }
+  .gear-field input {
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--ink);
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+    padding: 2px 0;
+    outline: none;
+    width: 100%;
+  }
+  .gear-field input:focus { border-color: var(--accent-2); }
+  .gear-field .suffix {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-3);
+    margin-top: 2px;
+  }
+
+  .mesh-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    color: var(--ink-3);
+    font-family: var(--mono);
+    min-width: 86px;
+  }
+  .mesh-arrow .ratio-pill {
+    font-size: 10px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 1px 6px;
+    margin-bottom: 12px;
+    color: var(--ink);
+  }
+  .mesh-arrow .arrow-line {
+    width: 100%;
+    height: 0;
+    border-top: 1.5px solid var(--ink);
+    position: relative;
+  }
+  .mesh-arrow .arrow-line::after {
+    content: "";
+    position: absolute;
+    right: -1px;
+    top: -5px;
+    border-left: 8px solid var(--ink);
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+  }
+  .mesh-arrow .stage-label {
+    font-size: 9px;
+    color: var(--ink-3);
+    margin-top: 12px;
+    letter-spacing: 0.1em;
+  }
+
+  .add-gear-btn {
+    align-self: stretch;
+    background: var(--paper);
+    border: 1.5px dashed var(--ink);
+    cursor: pointer;
+    min-width: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: var(--ink-2);
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-left: 8px;
+  }
+  .add-gear-btn:hover { background: #f1f5f9; }
+  .add-gear-btn i { font-size: 18px; }
+
+  .gearbox-results {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border: 1.5px solid var(--ink);
+  }
+  .gearbox-results .gr-cell {
+    padding: 10px 12px;
+    border-right: 1px solid var(--ink);
+    background: var(--paper);
+  }
+  .gearbox-results .gr-cell:last-child { border-right: none; }
+  .gearbox-results .gr-cell.highlight {
+    background: #f0f9ff;
+  }
+  .gr-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-3);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .gr-value {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .gr-value .small {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-3);
+    margin-left: 4px;
+  }
+
+  /* WHEEL SECTION ============================ */
+  .wheel-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .wheel-row {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--paper);
+    border: 1.5px solid var(--rule);
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .wheel-row.locked {
+    background: var(--locked-bg);
+    border-color: var(--locked);
+  }
+  .wheel-row.solving {
+    background: var(--solve-bg);
+    border-color: var(--solve);
+  }
+  .wheel-row.linked {
+    background: #eff6ff;
+    border-color: var(--accent-2);
+  }
+  .wheel-row .w-icon {
+    width: 36px; height: 36px;
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .wheel-row.locked .w-icon { background: var(--locked); border-color: var(--locked); color: #fff; }
+  .wheel-row.solving .w-icon { background: var(--solve); border-color: var(--solve); color: #fff; cursor: default; }
+  .wheel-row.linked .w-icon { background: var(--accent-2); border-color: var(--accent-2); color: #fff; cursor: default; }
+
+  .w-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-3);
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .w-label .var-symbol {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--ink);
+    color: #fff;
+    padding: 1px 5px;
+    letter-spacing: 0;
+  }
+  .w-input-line { display: flex; align-items: baseline; gap: 8px; }
+  .w-input-line input[type="number"] {
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--ink);
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    width: 100%;
+    padding: 2px 0;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+  .w-input-line input[type="number"]::-webkit-outer-spin-button,
+  .w-input-line input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none; margin: 0;
+  }
+  .w-input-line input[type="number"]:focus { border-color: var(--accent-2); }
+  .wheel-row.solving input { color: var(--solve); }
+  .wheel-row.linked input { color: var(--accent-2); }
+  .wheel-row .unit {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-3);
+    white-space: nowrap;
+  }
+  select.unit-select {
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    padding: 3px 6px;
+    font-size: 11px;
+    font-family: var(--mono);
+    cursor: pointer;
+  }
+
+  .link-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-3);
+    cursor: pointer;
+    user-select: none;
+    margin-top: 6px;
+  }
+  .link-toggle input { margin: 0; }
+  .link-toggle.on { color: var(--accent-2); }
+
+  .extras {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 1.5px solid var(--ink);
+  }
+  .extras .stat {
+    padding: 10px 12px;
+    border-right: 1px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+    background: var(--paper);
+  }
+  .extras .stat:nth-child(3n) { border-right: none; }
+  .extras .stat:nth-last-child(-n+3) { border-bottom: none; }
+  .extras .stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-3);
+    display: block;
+    margin-bottom: 3px;
+  }
+  .extras .stat-val {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .legend {
+    margin-top: 18px;
+    padding: 8px 14px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+  .legend i { margin-right: 4px; }
+  .legend .lg-locked i { color: var(--locked); }
+  .legend .lg-solve i { color: var(--solve); }
+  .legend .lg-link i { color: var(--accent-2); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="titleblock">
+    <h1 class="tb-title"><i class="fa-solid fa-calculator"></i>Drivetrain Calculator</h1>
+  </header>
+
+  <!-- ============== GEARBOX ============== -->
+  <section class="panel">
+    <div class="panel-head">
+      <i class="fa-solid fa-gears"></i>
+      <h2>Gearbox / Gear Train</h2>
+      <span class="head-meta">N<sub>OUT</sub> / N<sub>IN</sub> per stage · multiplied through</span>
+    </div>
+    <div class="panel-body">
+      <div class="formula">
+        ω<sub>out</sub> = ω<sub>motor</sub> ÷ ∏(N<sub>driven</sub> ÷ N<sub>driver</sub>) &nbsp;·&nbsp;
+        compound gears share a shaft: input teeth meshes upstream, output teeth drives downstream.
+      </div>
+
+      <div class="motor-row">
+        <div class="icon-pill"><i class="fa-solid fa-bolt"></i></div>
+        <div>
+          <span class="field-label">Motor input speed</span>
+          <span><input type="number" id="motor-rpm" value="4500" step="any" min="0"><span class="unit">RPM</span></span>
+        </div>
+      </div>
+
+      <div class="gear-train-wrap">
+        <div class="gear-train" id="gear-train"></div>
+      </div>
+
+      <div class="gearbox-results">
+        <div class="gr-cell">
+          <span class="gr-label">Total reduction</span>
+          <span class="gr-value" id="gb-ratio">—<span class="small">: 1</span></span>
+        </div>
+        <div class="gr-cell">
+          <span class="gr-label">Mech. advantage</span>
+          <span class="gr-value" id="gb-ma">—<span class="small">×</span></span>
+        </div>
+        <div class="gr-cell highlight">
+          <span class="gr-label">Output speed</span>
+          <span class="gr-value" id="gb-output">—<span class="small">RPM</span></span>
+        </div>
+        <div class="gr-cell">
+          <span class="gr-label">Stages</span>
+          <span class="gr-value" id="gb-stages">—</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== WHEEL ============== -->
+  <section class="panel">
+    <div class="panel-head">
+      <i class="fa-solid fa-circle-notch"></i>
+      <h2>Wheel / Tread</h2>
+      <span class="head-meta">v = π · D · ω</span>
+    </div>
+    <div class="panel-body">
+      <div class="formula">
+        v = π × D × (ω ÷ 60) &nbsp;·&nbsp; lock two values; the third (highlighted) is solved live. Link <i class="fa-solid fa-link"></i> couples ω to gearbox output.
+      </div>
+
+      <div class="wheel-grid">
+        <div id="row-D" class="wheel-row" data-key="D">
+          <button class="w-icon" data-key="D" title="Lock / solve toggle"><i class="fa-solid fa-lock"></i></button>
+          <div>
+            <span class="w-label"><span class="var-symbol">D</span> Wheel diameter</span>
+            <div class="w-input-line">
+              <input type="number" id="in-D" step="any" min="0">
+              <select class="unit-select" id="unit-D">
+                <option value="mm">mm</option>
+                <option value="cm" selected>cm</option>
+                <option value="m">m</option>
+                <option value="in">in</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="row-R" class="wheel-row" data-key="R">
+          <button class="w-icon" data-key="R" title="Lock / solve toggle"><i class="fa-solid fa-lock"></i></button>
+          <div>
+            <span class="w-label"><span class="var-symbol">ω</span> Wheel rot. speed</span>
+            <div class="w-input-line">
+              <input type="number" id="in-R" step="any" min="0">
+              <span class="unit">RPM</span>
+            </div>
+            <label class="link-toggle" id="link-toggle">
+              <input type="checkbox" id="link-cb">
+              <i class="fa-solid fa-link"></i>
+              <span>From gearbox</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="row-V" class="wheel-row" data-key="V">
+          <button class="w-icon" data-key="V" title="Lock / solve toggle"><i class="fa-solid fa-lock"></i></button>
+          <div>
+            <span class="w-label"><span class="var-symbol">v</span> Linear speed</span>
+            <div class="w-input-line">
+              <input type="number" id="in-V" step="any" min="0">
+              <select class="unit-select" id="unit-V">
+                <option value="mm/s">mm/s</option>
+                <option value="cm/s" selected>cm/s</option>
+                <option value="m/s">m/s</option>
+                <option value="km/h">km/h</option>
+                <option value="mph">mph</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="extras">
+        <div class="stat"><span class="stat-label">RPS (ω/60)</span><span class="stat-val" id="out-rps">—</span></div>
+        <div class="stat"><span class="stat-label">Circumference</span><span class="stat-val" id="out-circ">—</span></div>
+        <div class="stat"><span class="stat-label">Time / rev</span><span class="stat-val" id="out-tpr">—</span></div>
+        <div class="stat"><span class="stat-label">Speed (cm/s)</span><span class="stat-val" id="out-cms">—</span></div>
+        <div class="stat"><span class="stat-label">Speed (m/s)</span><span class="stat-val" id="out-ms">—</span></div>
+        <div class="stat"><span class="stat-label">Speed (km/h)</span><span class="stat-val" id="out-kmh">—</span></div>
+      </div>
+
+      <div class="legend">
+        <span class="lg-locked"><i class="fa-solid fa-lock"></i>Locked input</span>
+        <span class="lg-solve"><i class="fa-solid fa-bullseye"></i>Solved (live-calculated)</span>
+        <span class="lg-link"><i class="fa-solid fa-link"></i>Linked to gearbox output</span>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   STATE
+   ========================================================= */
+const state = {
+  motorRPM: 4500,
+  // gears[0] = motor pinion (simple by default)
+  // gears[1..n-1] = compound by default
+  gears: [
+    { type: 'simple',   teeth: 12 },
+    { type: 'compound', input: 60, output: 12 },
+    { type: 'compound', input: 60, output: 12 },
+    { type: 'compound', input: 60, output: 12 },
+    { type: 'simple',   teeth: 30 },
+  ],
+  // Wheel calc
+  unitD: 'cm',
+  unitV: 'cm/s',
+  D_si: 0.04,    // metres
+  R_rpm: 0,      // wheel rpm
+  V_si: 0,       // m/s
+  solving: 'V',  // 'D' | 'R' | 'V'
+  linked: true,  // wheel R driven by gearbox
+};
+
+const D_TO_M  = { mm: 0.001, cm: 0.01, m: 1, in: 0.0254 };
+const V_TO_MS = { 'mm/s': 0.001, 'cm/s': 0.01, 'm/s': 1, 'km/h': 1/3.6, 'mph': 0.44704 };
+
+/* =========================================================
+   GEARBOX MATH
+   ========================================================= */
+// Adjacent stages: driver = gear[i].(out|teeth), driven = gear[i+1].(in|teeth)
+function gearOutTeeth(g) { return g.type === 'compound' ? g.output : g.teeth; }
+function gearInTeeth(g)  { return g.type === 'compound' ? g.input  : g.teeth; }
+
+function computeGearbox() {
+  const gs = state.gears;
+  if (gs.length < 2) return { ratio: 1, stages: 0, stageRatios: [], outRPM: state.motorRPM };
+  let ratio = 1;
+  const stageRatios = [];
+  for (let i = 0; i < gs.length - 1; i++) {
+    const driver = gearOutTeeth(gs[i]);
+    const driven = gearInTeeth(gs[i+1]);
+    const r = driven / driver;
+    if (!isFinite(r) || r <= 0) {
+      stageRatios.push(NaN);
+      ratio = NaN;
+    } else {
+      stageRatios.push(r);
+      if (isFinite(ratio)) ratio *= r;
+    }
+  }
+  const outRPM = isFinite(ratio) && ratio > 0 ? state.motorRPM / ratio : NaN;
+  return { ratio, stages: gs.length - 1, stageRatios, outRPM };
+}
+
+/* =========================================================
+   RENDERING — GEARBOX
+   ========================================================= */
+const gearTrainEl = document.getElementById('gear-train');
+
+function renderGearTrain() {
+  gearTrainEl.innerHTML = '';
+  const gs = state.gears;
+  const { stageRatios } = computeGearbox();
+
+  gs.forEach((g, i) => {
+    // Insert mesh arrow before all gears except the first
+    if (i > 0) {
+      const arrow = document.createElement('div');
+      arrow.className = 'mesh-arrow';
+      const r = stageRatios[i-1];
+      const rText = isFinite(r) ? (r >= 1 ? r.toPrecision(3) + ':1' : '1:' + (1/r).toPrecision(3)) : '—';
+      arrow.innerHTML = `
+        <div class="ratio-pill">${rText}</div>
+        <div class="arrow-line"></div>
+        <div class="stage-label">STAGE ${i}</div>
+      `;
+      gearTrainEl.appendChild(arrow);
+    }
+
+    const card = document.createElement('div');
+    card.className = 'gear-card';
+    let label;
+    if (i === 0) label = 'PINION';
+    else if (i === gs.length - 1) label = 'OUTPUT';
+    else label = 'COMPOUND';
+
+    const delBtn = i === 0
+      ? ''
+      : `<button class="gc-del" data-action="del" data-idx="${i}" title="Remove gear"><i class="fa-solid fa-trash-can"></i></button>`;
+
+    let fields = '';
+    if (g.type === 'simple') {
+      fields = `
+        <div class="gear-field">
+          <label>Teeth (N)</label>
+          <input type="number" data-action="teeth" data-idx="${i}" value="${g.teeth ?? ''}" min="1" step="1">
+          <span class="suffix">on shaft ${i+1}</span>
+        </div>
+      `;
+    } else {
+      fields = `
+        <div class="gear-field">
+          <label>Input N (driven)</label>
+          <input type="number" data-action="input" data-idx="${i}" value="${g.input ?? ''}" min="1" step="1">
+        </div>
+        <div class="gear-field">
+          <label>Output N (driver)</label>
+          <input type="number" data-action="output" data-idx="${i}" value="${g.output ?? ''}" min="1" step="1">
+          <span class="suffix">same shaft</span>
+        </div>
+      `;
+    }
+
+    const simpleOn   = g.type === 'simple'   ? 'on' : '';
+    const compoundOn = g.type === 'compound' ? 'on' : '';
+
+    card.innerHTML = `
+      <div class="gc-head">
+        <span class="gc-num">G${String(i+1).padStart(2,'0')}</span>
+        <span class="gc-tag">${label}</span>
+        ${delBtn}
+      </div>
+      <div class="gc-body">
+        <div class="type-toggle">
+          <button data-action="type" data-type="simple"   data-idx="${i}" class="${simpleOn}">Simple</button>
+          <button data-action="type" data-type="compound" data-idx="${i}" class="${compoundOn}">Comp</button>
+        </div>
+        ${fields}
+      </div>
+    `;
+    gearTrainEl.appendChild(card);
+  });
+
+  // Add-gear button at end
+  const add = document.createElement('button');
+  add.className = 'add-gear-btn';
+  add.dataset.action = 'add';
+  add.innerHTML = `<i class="fa-solid fa-plus"></i><span>Add gear</span>`;
+  gearTrainEl.appendChild(add);
+}
+
+/* Gear-train interactions (event delegation) */
+gearTrainEl.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-action]');
+  if (!t) return;
+  const action = t.dataset.action;
+  const idx = parseInt(t.dataset.idx, 10);
+
+  if (action === 'add') {
+    // Append a compound gear by default
+    state.gears.push({ type: 'compound', input: 48, output: 12 });
+    rerenderAll();
+  } else if (action === 'del') {
+    state.gears.splice(idx, 1);
+    rerenderAll();
+  } else if (action === 'type') {
+    const newType = t.dataset.type;
+    const g = state.gears[idx];
+    if (g.type === newType) return;
+    if (newType === 'simple') {
+      const t1 = g.input ?? g.teeth ?? 20;
+      state.gears[idx] = { type: 'simple', teeth: t1 };
+    } else {
+      const t1 = g.teeth ?? 60;
+      state.gears[idx] = { type: 'compound', input: t1, output: 12 };
+    }
+    rerenderAll();
+  }
+});
+
+gearTrainEl.addEventListener('input', (e) => {
+  const t = e.target;
+  if (t.tagName !== 'INPUT' || !t.dataset.action) return;
+  const idx = parseInt(t.dataset.idx, 10);
+  const v = parseFloat(t.value);
+  if (!isFinite(v) || v <= 0) return;
+  const action = t.dataset.action;
+  if (action === 'teeth')  state.gears[idx].teeth  = v;
+  if (action === 'input')  state.gears[idx].input  = v;
+  if (action === 'output') state.gears[idx].output = v;
+  // Don't re-render whole train (preserves input focus); just refresh ratios + downstream
+  refreshGearboxResults();
+  if (state.linked) syncLinkedRPM();
+  computeWheel();
+});
+
+document.getElementById('motor-rpm').addEventListener('input', (e) => {
+  const v = parseFloat(e.target.value);
+  if (isFinite(v) && v >= 0) state.motorRPM = v;
+  refreshGearboxResults();
+  if (state.linked) syncLinkedRPM();
+  computeWheel();
+});
+
+function refreshGearboxResults() {
+  const { ratio, outRPM, stages, stageRatios } = computeGearbox();
+
+  document.getElementById('gb-stages').textContent = stages || '—';
+  document.getElementById('gb-ratio').innerHTML =
+    isFinite(ratio) ? `${round(ratio)}<span class="small">: 1</span>` : `—<span class="small">: 1</span>`;
+  document.getElementById('gb-ma').innerHTML =
+    isFinite(ratio) ? `${round(ratio)}<span class="small">×</span>` : `—<span class="small">×</span>`;
+  document.getElementById('gb-output').innerHTML =
+    isFinite(outRPM) ? `${round(outRPM)}<span class="small">RPM</span>` : `—<span class="small">RPM</span>`;
+
+  // Update stage ratio pills inline (no full rerender)
+  const arrows = gearTrainEl.querySelectorAll('.mesh-arrow');
+  arrows.forEach((a, i) => {
+    const pill = a.querySelector('.ratio-pill');
+    const r = stageRatios[i];
+    if (pill) pill.textContent = isFinite(r) ? (r >= 1 ? r.toPrecision(3) + ':1' : '1:' + (1/r).toPrecision(3)) : '—';
+  });
+}
+
+/* =========================================================
+   WHEEL CALC
+   ========================================================= */
+const inputs = {
+  D: document.getElementById('in-D'),
+  R: document.getElementById('in-R'),
+  V: document.getElementById('in-V'),
+};
+const rows = {
+  D: document.getElementById('row-D'),
+  R: document.getElementById('row-R'),
+  V: document.getElementById('row-V'),
+};
+const unitDsel = document.getElementById('unit-D');
+const unitVsel = document.getElementById('unit-V');
+const linkCB   = document.getElementById('link-cb');
+const linkLbl  = document.getElementById('link-toggle');
+
+// Initial display values
+inputs.D.value = 4;
+inputs.R.value = '';
+inputs.V.value = '';
+linkCB.checked = state.linked;
+
+function readDisplayed() {
+  const D = parseFloat(inputs.D.value) * D_TO_M[unitDsel.value];
+  const R = parseFloat(inputs.R.value);
+  const V = parseFloat(inputs.V.value) * V_TO_MS[unitVsel.value];
+  return { D, R, V };
+}
+
+function writeSI(key, valueSI) {
+  if (key === 'D') inputs.D.value = round(valueSI / D_TO_M[unitDsel.value]);
+  if (key === 'R') inputs.R.value = round(valueSI);
+  if (key === 'V') inputs.V.value = round(valueSI / V_TO_MS[unitVsel.value]);
+}
+
+function round(n) {
+  if (!isFinite(n) || isNaN(n)) return '';
+  if (n === 0) return 0;
+  const a = Math.abs(n);
+  let p;
+  if (a >= 1000) p = 5;
+  else if (a >= 100) p = 4;
+  else if (a >= 10) p = 4;
+  else if (a >= 1) p = 4;
+  else p = 4;
+  return Number(n.toPrecision(p));
+}
+
+function syncLinkedRPM() {
+  const { outRPM } = computeGearbox();
+  if (isFinite(outRPM)) {
+    inputs.R.value = round(outRPM);
+  } else {
+    inputs.R.value = '';
+  }
+}
+
+function computeWheel() {
+  const cur = readDisplayed();
+  let { D, R, V } = cur;
+
+  if (state.linked) {
+    // R is driven by gearbox; V or D is solved
+    const { outRPM } = computeGearbox();
+    R = outRPM;
+    if (state.solving === 'R') state.solving = 'V'; // can't solve linked field
+    applyRowState();
+    if (state.solving === 'V' && D > 0 && isFinite(R)) {
+      const Vsi = Math.PI * D * (R / 60);
+      writeSI('V', Vsi);
+    } else if (state.solving === 'D' && R > 0 && V >= 0) {
+      const Dsi = (V * 60) / (Math.PI * R);
+      writeSI('D', Dsi);
+    }
+  } else {
+    if (state.solving === 'V' && D > 0 && R >= 0) {
+      const Vsi = Math.PI * D * (R / 60);
+      writeSI('V', Vsi);
+    } else if (state.solving === 'R' && D > 0 && V >= 0) {
+      const Rrpm = (V * 60) / (Math.PI * D);
+      writeSI('R', Rrpm);
+    } else if (state.solving === 'D' && R > 0 && V >= 0) {
+      const Dsi = (V * 60) / (Math.PI * R);
+      writeSI('D', Dsi);
+    }
+  }
+
+  // Refresh extras
+  const final = readDisplayed();
+  const Dm = final.D, Rrpm = final.R, Vms = final.V;
+  const ok = isFinite(Dm) && isFinite(Rrpm) && isFinite(Vms);
+  document.getElementById('out-rps').textContent  = ok ? round(Rrpm/60) + ' /s' : '—';
+  document.getElementById('out-circ').textContent = ok ? formatLen(Math.PI*Dm) : '—';
+  document.getElementById('out-tpr').textContent  = (ok && Rrpm>0) ? round(60/Rrpm) + ' s' : '—';
+  document.getElementById('out-cms').textContent  = ok ? round(Vms*100) + ' cm/s' : '—';
+  document.getElementById('out-ms').textContent   = ok ? round(Vms) + ' m/s' : '—';
+  document.getElementById('out-kmh').textContent  = ok ? round(Vms*3.6) + ' km/h' : '—';
+}
+
+function formatLen(metres) {
+  if (!isFinite(metres)) return '—';
+  if (metres >= 1)    return round(metres) + ' m';
+  if (metres >= 0.01) return round(metres*100) + ' cm';
+  return round(metres*1000) + ' mm';
+}
+
+function applyRowState() {
+  for (const k of ['D','R','V']) {
+    rows[k].classList.remove('locked','solving','linked');
+    inputs[k].removeAttribute('readonly');
+
+    if (k === 'R' && state.linked) {
+      rows[k].classList.add('linked');
+      inputs[k].setAttribute('readonly','readonly');
+      const ic = rows[k].querySelector('.w-icon i');
+      ic.className = 'fa-solid fa-link';
+    } else if (k === state.solving) {
+      rows[k].classList.add('solving');
+      inputs[k].setAttribute('readonly','readonly');
+      const ic = rows[k].querySelector('.w-icon i');
+      ic.className = 'fa-solid fa-bullseye';
+    } else {
+      rows[k].classList.add('locked');
+      const ic = rows[k].querySelector('.w-icon i');
+      ic.className = 'fa-solid fa-lock';
+    }
+  }
+  linkLbl.classList.toggle('on', state.linked);
+}
+
+/* Wheel-row interactions */
+document.querySelectorAll('.w-icon').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const k = btn.dataset.key;
+    if (k === 'R' && state.linked) return; // R is locked to gearbox; user must unlink first
+    if (k === state.solving) return;       // already solving
+    state.solving = k;
+    if (k === 'R') {
+      // Solving R while linked is invalid; ensure unlink
+      state.linked = false;
+      linkCB.checked = false;
+    }
+    applyRowState();
+    computeWheel();
+  });
+});
+
+['D','R','V'].forEach(k => {
+  inputs[k].addEventListener('input', () => {
+    if (k === 'R' && state.linked) return;
+    if (k !== state.solving) computeWheel();
+  });
+});
+unitDsel.addEventListener('change', computeWheel);
+unitVsel.addEventListener('change', computeWheel);
+
+linkCB.addEventListener('change', () => {
+  state.linked = linkCB.checked;
+  if (state.linked) {
+    // If R was the solving field, switch to V
+    if (state.solving === 'R') state.solving = 'V';
+    syncLinkedRPM();
+  }
+  applyRowState();
+  computeWheel();
+});
+
+/* =========================================================
+   ORCHESTRATION
+   ========================================================= */
+function rerenderAll() {
+  renderGearTrain();
+  refreshGearboxResults();
+  if (state.linked) syncLinkedRPM();
+  computeWheel();
+}
+
+rerenderAll();
+applyRowState();
+</script>
+</body>
+</html>
