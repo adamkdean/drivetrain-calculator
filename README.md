@@ -2,9 +2,9 @@
 
 Drivetrain calculator for robotics. Computes gearbox reduction and wheel/tread linear speed from a configurable multi-stage gear train.
 
-View the [demo](https://adamkdean.github.io/drivetrain-calculator/).
-
 ![Drivetrain Calculator](https://github.com/user-attachments/assets/ab2ebfdb-9b09-4ba4-ae06-a3aecd1b4f4c)
+
+View the [demo](https://adamkdean.github.io/drivetrain-calculator/).
 
 ## Gearbox
 
