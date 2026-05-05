@@ -29,3 +29,5 @@ Derived outputs: circumference, time per revolution, RPS, and `v` in multiple un
 ## Usage
 
 Set motor RPM, edit teeth counts per stage, set wheel diameter, lock two of `{D, ω, v}`. The remaining variable updates on input.
+
+![Drivetrain Calculator usage](https://github.com/user-attachments/assets/ab2ebfdb-9b09-4ba4-ae06-a3aecd1b4f4c)
